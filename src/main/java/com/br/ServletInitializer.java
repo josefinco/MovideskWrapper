@@ -1,4 +1,4 @@
-package com.br5;
+package com.br;
 
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
