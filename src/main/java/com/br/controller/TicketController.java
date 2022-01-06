@@ -3,14 +3,18 @@ package com.br.controller;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.br.exceptions.ExceptionMessageHandler;
+import com.br.model.Root;
 import com.br.service.RequestService;
 
 import lombok.extern.log4j.Log4j2;
@@ -26,23 +30,26 @@ public class TicketController {
 	@Value("${movidesk.token}")
 	String movideskToken;
 
-	@PostMapping(path = "tickets", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<?> create(@RequestHeader("api-key") String key) {
-		RequestService requestService = new RequestService();
+	@Autowired
+	ExceptionMessageHandler exceptionHandler;
 
-		UUID uui = UUID.randomUUID();
+	RequestService requestService = new RequestService();
 
-		log.info("Recebendo nova requisição para criação de ticket ");
+	@PostMapping(path = "tickets", produces = "application/json")
+	public ResponseEntity<?> create(@RequestHeader("api-key") String key, @RequestBody Root body) {
+		UUID uuid = UUID.randomUUID();
+		log.info(uuid + " | Recebendo nova requisição para criação de ticket ");
+		log.debug(body);
 		try {
-			log.debug(uui + " | Requisitando informações para o Movidesk");
-			requestService.getuserInformation(movideskEndpoint, movideskToken);
-			
-		} catch (IOException e) {
-			log.error(uui + " | Erro ao efetuar requisição ao Movidesk");
-			log.error(e.getMessage());
-		}
+			log.debug(uuid + " | Requisitando informações para o Movidesk");
+			ResponseEntity<String> responseEntity = requestService.createTicket(movideskEndpoint, movideskToken, body);
+			return ResponseEntity.status(HttpStatus.ACCEPTED).body(responseEntity.getBody());
 
-		return null;
+		} catch (Exception e) {
+			log.error(uuid + " | Erro ao efetuar requisição ao Movidesk");
+			log.error(e.getMessage());
+			return exceptionHandler.exceptionHandler(e);
+		}
 
 	}
 }
